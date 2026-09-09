@@ -81,20 +81,20 @@ export const TokenVisualizer: React.FC<TokenVisualizerProps> = ({
       {/* Title & Badge */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0">
             <Key className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                 Xác Thực Thành Công & Nhận Token
               </h3>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
                 {tokenInfo.tokenType === 'JWT' ? 'JSON Web Token (JWT)' : 'Session Token'}
               </span>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Trích xuất từ trường: <code className="text-cyan-700 dark:text-cyan-300 font-mono">{tokenInfo.extractedFromKey}</code> ({tokenInfo.token.length} ký tự)
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+              Khóa xác thực trích xuất từ: <code className="text-cyan-700 dark:text-cyan-300 font-mono font-semibold">{tokenInfo.extractedFromKey}</code> ({tokenInfo.token.length} ký tự)
             </p>
           </div>
         </div>
@@ -102,11 +102,12 @@ export const TokenVisualizer: React.FC<TokenVisualizerProps> = ({
         <div className="flex items-center gap-2">
           <button
             id="btn-copy-token"
+            type="button"
             onClick={copyToken}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Đã sao chép Token' : 'Sao chép Token'}</span>
+            <span>{copied ? 'Đã sao chép' : 'Sao chép Token'}</span>
           </button>
         </div>
       </div>

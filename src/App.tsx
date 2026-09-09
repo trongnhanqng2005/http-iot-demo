@@ -7,6 +7,7 @@ import React from 'react';
 import { Navbar } from './components/Navbar';
 import { LoginConfigCard } from './components/LoginConfigCard';
 import { HttpLifecycleViewer } from './components/HttpLifecycleViewer';
+import { RequestHistoryBar } from './components/RequestHistoryBar';
 import { RequestResponseInspector } from './components/RequestResponseInspector';
 import { TokenVisualizer } from './components/TokenVisualizer';
 import { KnowledgeBaseModal } from './components/KnowledgeBaseModal';
@@ -15,6 +16,7 @@ import { HTTP_PRESETS } from './data/presets';
 import {
   AuthTokenInfo,
   HeaderPair,
+  HistoryItem,
   RequestConfig,
   RequestLog,
   ResponseLog,
@@ -57,6 +59,10 @@ export default function App() {
   const [tokenInfo, setTokenInfo] = React.useState<AuthTokenInfo | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
+  // History State
+  const [history, setHistory] = React.useState<HistoryItem[]>([]);
+  const [selectedHistoryId, setSelectedHistoryId] = React.useState<string | null>(null);
+
   // Modals state
   const [knowledgeModalOpen, setKnowledgeModalOpen] = React.useState<boolean>(false);
   const [knowledgeInitialTopic, setKnowledgeInitialTopic] = React.useState<string>('http-vs-https');
@@ -89,7 +95,22 @@ export default function App() {
     setRequestLog(null);
     setResponseLog(null);
     setTokenInfo(null);
+    setSelectedHistoryId(null);
     setIsLoading(false);
+  };
+
+  // Select a history item to restore into inspector
+  const handleSelectHistoryItem = (item: HistoryItem) => {
+    setSelectedHistoryId(item.id);
+    setRequestLog(item.request);
+    setResponseLog(item.response);
+    setTokenInfo(item.tokenInfo);
+  };
+
+  // Clear history list
+  const handleClearHistory = () => {
+    setHistory([]);
+    setSelectedHistoryId(null);
   };
 
   // Open knowledge modal with specific topic
@@ -213,12 +234,30 @@ export default function App() {
       setResponseLog(resLog);
 
       // Extract token if successful
+      let foundToken: AuthTokenInfo | null = null;
       if (response.ok && parsedJson) {
-        const foundToken = inspectToken(parsedJson);
+        foundToken = inspectToken(parsedJson);
         if (foundToken) {
           setTokenInfo(foundToken);
         }
       }
+
+      // Add to history
+      const historyItem: HistoryItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        url: config.url,
+        method: config.method,
+        status: resLog.status,
+        statusText: resLog.statusText,
+        durationMs: resLog.durationMs,
+        isError: resLog.isError,
+        request: newRequestLog,
+        response: resLog,
+        tokenInfo: foundToken,
+      };
+      setHistory((prev) => [historyItem, ...prev.slice(0, 7)]);
+      setSelectedHistoryId(historyItem.id);
     } catch (err: any) {
       clearTimeout(timeoutId);
       const endTime = performance.now();
@@ -243,7 +282,7 @@ export default function App() {
         errorMessage = err.message;
       }
 
-      setResponseLog({
+      const errResLog: ResponseLog = {
         status: 0,
         statusText: errorType,
         headers: {},
@@ -252,7 +291,25 @@ export default function App() {
         isError: true,
         errorMessage,
         errorType,
-      });
+      };
+      setResponseLog(errResLog);
+
+      // Add error to history
+      const historyItem: HistoryItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        url: config.url,
+        method: config.method,
+        status: 0,
+        statusText: errorType,
+        durationMs,
+        isError: true,
+        request: newRequestLog,
+        response: errResLog,
+        tokenInfo: null,
+      };
+      setHistory((prev) => [historyItem, ...prev.slice(0, 7)]);
+      setSelectedHistoryId(historyItem.id);
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
@@ -332,6 +389,14 @@ export default function App() {
           isRequesting={isLoading}
           response={responseLog}
           isHttps={isHttps}
+        />
+
+        {/* Section 2.5: Request History Stream */}
+        <RequestHistoryBar
+          history={history}
+          selectedId={selectedHistoryId}
+          onSelect={handleSelectHistoryItem}
+          onClear={handleClearHistory}
         />
 
         {/* Section 3: Detailed Request & Response Technical Inspector */}

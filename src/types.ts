@@ -66,3 +66,18 @@ export interface HttpPreset {
   tokenKey?: string;
   notes: string;
 }
+
+export interface HistoryItem {
+  id: string;
+  timestamp: string;
+  url: string;
+  method: HttpMethod;
+  status: number;
+  statusText: string;
+  durationMs: number;
+  isError: boolean;
+  request: RequestLog;
+  response: ResponseLog;
+  tokenInfo: AuthTokenInfo | null;
+}
+

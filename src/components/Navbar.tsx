@@ -32,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
         {/* Brand & Title */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-cyan-500/10 dark:bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 font-mono font-bold text-base shadow-sm">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 via-cyan-500/10 to-slate-900 border border-cyan-500/40 flex items-center justify-center text-cyan-600 dark:text-cyan-400 font-mono font-bold text-sm shadow-xs transition-transform hover:scale-105">
             HTTP
           </div>
           <div>
@@ -40,12 +40,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                 HTTP & IoT Auth Lab
               </h1>
-              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
-                Mô phỏng Giao thức
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Pro Max UI</span>
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Trực quan hóa vòng đời Request/Response & Xác thực Token cho Lập trình viên IoT
+            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+              Vòng đời HTTP POST & Xác thực Bearer Token cho Lập trình viên IoT
             </p>
           </div>
         </div>
