@@ -1,0 +1,70 @@
+import { HttpPreset } from '../types';
+
+export const HTTP_PRESETS: HttpPreset[] = [
+  {
+    id: 'dummyjson',
+    name: 'DummyJSON Auth API (Trả về JWT Thật)',
+    description: 'API xác thực công khai trả về Access Token JWT đầy đủ thông tin người dùng và thời hạn.',
+    url: 'https://dummyjson.com/auth/login',
+    method: 'POST',
+    defaultUsername: 'emilys',
+    defaultPassword: 'emilyspass',
+    headers: [
+      { key: 'Content-Type', value: 'application/json', enabled: true },
+      { key: 'User-Agent', value: 'ESP32-HTTPClient/1.0', enabled: true },
+    ],
+    useCustomBody: false,
+    tokenKey: 'accessToken',
+    notes: 'Endpoint công khai an toàn, trả về token dạng JWT (JSON Web Token) có 3 phần chuẩn RFC 7519.',
+  },
+  {
+    id: 'reqres',
+    name: 'Reqres Auth API (Trả về Token Phiên)',
+    description: 'Dịch vụ mock API phổ biến với endpoint /api/login trả về token chuỗi đơn giản.',
+    url: 'https://reqres.in/api/login',
+    method: 'POST',
+    defaultUsername: 'eve.holt@reqres.in',
+    defaultPassword: 'cityslicka',
+    headers: [
+      { key: 'Content-Type', value: 'application/json', enabled: true },
+    ],
+    useCustomBody: true,
+    customBodyJson: JSON.stringify({
+      email: 'eve.holt@reqres.in',
+      password: 'cityslicka',
+    }, null, 2),
+    tokenKey: 'token',
+    notes: 'Reqres yêu cầu trường "email" thay vì "username". Sử dụng custom body JSON.',
+  },
+  {
+    id: 'httpbin',
+    name: 'HTTPBin Echo API (Phân tích Raw HTTP)',
+    description: 'Echo lại chính xác toàn bộ Headers, Body và thông tin kết nối gửi lên.',
+    url: 'https://httpbin.org/post',
+    method: 'POST',
+    defaultUsername: 'iot_device_01',
+    defaultPassword: 'secret_sensor_key_123',
+    headers: [
+      { key: 'Content-Type', value: 'application/json', enabled: true },
+      { key: 'X-Device-MAC', value: '24:6F:28:B2:7D:9A', enabled: true },
+      { key: 'X-Firmware-Ver', value: 'v2.4.1-ota', enabled: true },
+    ],
+    useCustomBody: false,
+    notes: 'Tuyệt vời để kiểm tra xem Server nhận được những Header và Byte payload nào từ thiết bị.',
+  },
+  {
+    id: 'custom',
+    name: 'Tùy chỉnh Server riêng (IoT Backend / Custom API)',
+    description: 'Nhập URL server thật của bạn (Node.js, Python Flask/FastAPI, Spring, Go, ESP32 WebServer...)',
+    url: 'https://api.example.com/api/v1/auth/login',
+    method: 'POST',
+    defaultUsername: 'admin',
+    defaultPassword: 'password123',
+    headers: [
+      { key: 'Content-Type', value: 'application/json', enabled: true },
+      { key: 'Accept', value: 'application/json', enabled: true },
+    ],
+    useCustomBody: false,
+    notes: 'Cho phép kiểm thử trực tiếp với API server thật của bạn.',
+  },
+];

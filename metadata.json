@@ -1,0 +1,6 @@
+{
+  "name": "HTTP & IoT Auth Lab",
+  "description": "Ứng dụng trực quan hóa giao thức HTTP/HTTPS, vòng đời Request/Response và quy trình xác thực Token/JWT cho lập trình viên IoT.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
