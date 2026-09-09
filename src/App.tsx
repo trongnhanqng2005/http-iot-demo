@@ -6,10 +6,11 @@
 import React from 'react';
 import { Navbar } from './components/Navbar';
 import { LoginConfigCard } from './components/LoginConfigCard';
+import { ServerResponsePanel } from './components/ServerResponsePanel';
+import { NetworkPipeConnector } from './components/NetworkPipeConnector';
 import { HttpLifecycleViewer } from './components/HttpLifecycleViewer';
-import { RequestHistoryBar } from './components/RequestHistoryBar';
-import { RequestResponseInspector } from './components/RequestResponseInspector';
-import { TokenVisualizer } from './components/TokenVisualizer';
+import { RequestHistoryDrawer } from './components/RequestHistoryDrawer';
+import { ToastContainer } from './components/ToastContainer';
 import { KnowledgeBaseModal } from './components/KnowledgeBaseModal';
 import { IotCodeSnippetsModal } from './components/IotCodeSnippetsModal';
 import { HTTP_PRESETS } from './data/presets';
@@ -20,6 +21,7 @@ import {
   RequestConfig,
   RequestLog,
   ResponseLog,
+  ToastNotification,
 } from './types';
 import {
   generateRawHttpWire,
@@ -27,6 +29,7 @@ import {
   inspectToken,
   maskJsonPasswords,
 } from './utils/httpHelper';
+import { soundManager } from './utils/soundEffects';
 import {
   BookOpen,
   Code2,
@@ -34,6 +37,10 @@ import {
   Radio,
   ShieldCheck,
   Zap,
+  Layers,
+  Activity,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 export default function App() {
@@ -59,23 +66,70 @@ export default function App() {
   const [tokenInfo, setTokenInfo] = React.useState<AuthTokenInfo | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-  // History State
+  // Request History State
   const [history, setHistory] = React.useState<HistoryItem[]>([]);
   const [selectedHistoryId, setSelectedHistoryId] = React.useState<string | null>(null);
 
-  // Modals state
+  // Interactive UI Polish States
+  const [historyDrawerOpen, setHistoryDrawerOpen] = React.useState<boolean>(false);
+  const [toasts, setToasts] = React.useState<ToastNotification[]>([]);
+  const [stepByStepMode, setStepByStepMode] = React.useState<boolean>(false);
+  const [isSoundMuted, setIsSoundMuted] = React.useState<boolean>(soundManager.getIsMuted());
+  const [showLifecycleSection, setShowLifecycleSection] = React.useState<boolean>(true);
+
+  // Modals
   const [knowledgeModalOpen, setKnowledgeModalOpen] = React.useState<boolean>(false);
-  const [knowledgeInitialTopic, setKnowledgeInitialTopic] = React.useState<string>('http-vs-https');
+  const [knowledgeInitialTopic, setKnowledgeInitialTopic] = React.useState<string | undefined>(undefined);
   const [snippetsModalOpen, setSnippetsModalOpen] = React.useState<boolean>(false);
 
-  // Abort controller reference to cancel request
+  // Abort controller ref for in-flight requests
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
-  // Handle Preset Switching
+  // Toast Helper
+  const showToast = (
+    type: 'success' | 'error' | 'info' | 'warning',
+    title: string,
+    message?: string
+  ) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setToasts((prev) => [...prev, { id, type, title, message, durationMs: 3800 }]);
+  };
+
+  const handleDismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // Sound Toggle Helper
+  const handleToggleSound = () => {
+    const newMuted = !isSoundMuted;
+    soundManager.setMuted(newMuted);
+    setIsSoundMuted(newMuted);
+    showToast(
+      'info',
+      newMuted ? 'Đã tắt âm thanh' : 'Đã bật âm thanh phản hồi',
+      newMuted
+        ? 'Chế độ im lặng (Silent)'
+        : 'Web Audio API đã sẵn sàng phát tín hiệu âm thanh mạng.'
+    );
+  };
+
+  // Step-by-Step Toggle Helper
+  const handleToggleStepByStep = () => {
+    const next = !stepByStepMode;
+    setStepByStepMode(next);
+    showToast(
+      'info',
+      next ? 'Chế độ Giải thích: ĐANG BẬT' : 'Chế độ Giải thích: ĐÃ TẮT',
+      next
+        ? 'Rê chuột vào Method, Header hoặc TLS để xem chú giải chi tiết'
+        : 'Đã ẩn các chú giải giao thức'
+    );
+  };
+
+  // Switch presets
   const handleSelectPreset = (presetId: string) => {
     const preset = HTTP_PRESETS.find((p) => p.id === presetId);
     if (!preset) return;
-
     setSelectedPresetId(presetId);
     setConfig({
       url: preset.url,
@@ -87,243 +141,323 @@ export default function App() {
       useCustomBody: preset.useCustomBody,
       timeoutMs: 5000,
     });
+    showToast('info', `Đã chọn máy chủ: ${preset.name}`);
   };
 
-  // Reset all states
+  // Reset all state
   const handleReset = () => {
-    handleSelectPreset('dummyjson');
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const preset = HTTP_PRESETS[0];
+    setSelectedPresetId('dummyjson');
+    setConfig({
+      url: preset.url,
+      method: preset.method,
+      headers: [...preset.headers],
+      username: preset.defaultUsername,
+      password: preset.defaultPassword,
+      customBodyJson: preset.customBodyJson,
+      useCustomBody: preset.useCustomBody,
+      timeoutMs: 5000,
+    });
     setRequestLog(null);
     setResponseLog(null);
     setTokenInfo(null);
-    setSelectedHistoryId(null);
     setIsLoading(false);
-  };
-
-  // Select a history item to restore into inspector
-  const handleSelectHistoryItem = (item: HistoryItem) => {
-    setSelectedHistoryId(item.id);
-    setRequestLog(item.request);
-    setResponseLog(item.response);
-    setTokenInfo(item.tokenInfo);
-  };
-
-  // Clear history list
-  const handleClearHistory = () => {
-    setHistory([]);
     setSelectedHistoryId(null);
+    showToast('info', 'Đã đặt lại cấu hình mặc định');
   };
 
-  // Open knowledge modal with specific topic
+  // Open knowledge modal on specific topic
   const openKnowledgeWithTopic = (topicId: string) => {
     setKnowledgeInitialTopic(topicId);
     setKnowledgeModalOpen(true);
   };
 
-  // Cancel/Abort current in-flight request
-  const handleAbortRequest = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-  };
-
-  // Send real HTTP Request
+  // Send the actual HTTP request
   const handleSendRequest = async () => {
     if (isLoading) return;
 
-    // Abort previous if any
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+    // Validate URL
+    let targetUrl = config.url.trim();
+    if (!targetUrl) {
+      showToast('error', 'URL không hợp lệ', 'Vui lòng nhập địa chỉ máy chủ API đích.');
+      return;
     }
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = 'https://' + targetUrl;
+      setConfig((prev) => ({ ...prev, url: targetUrl }));
+    }
+
+    // Play tick sound feedback
+    soundManager.playSendTick();
+
+    // Prepare Request Body
+    let bodyToSend: string | undefined = undefined;
+    if (config.method !== 'GET') {
+      if (config.useCustomBody) {
+        bodyToSend = config.customBodyJson;
+      } else {
+        const payload: Record<string, any> = {
+          username: config.username,
+          password: config.password,
+        };
+        bodyToSend = JSON.stringify(payload, null, 2);
+      }
+    }
+
+    // Build headers record
+    const headersRecord = headersArrayToRecord(config.headers);
+
+    // Build raw request string for wire inspection
+    const rawReqWire = generateRawHttpWire(
+      config.method,
+      targetUrl,
+      headersRecord,
+      bodyToSend
+    );
+
+    const maskedBody = bodyToSend ? maskJsonPasswords(bodyToSend) : '';
+
+    const newReqLog: RequestLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      method: config.method,
+      url: targetUrl,
+      headers: headersRecord,
+      body: bodyToSend || '',
+      maskedBody,
+      rawHttpWire: rawReqWire,
+    };
+
+    setRequestLog(newReqLog);
+    setResponseLog(null);
+    setTokenInfo(null);
+    setIsLoading(true);
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    setIsLoading(true);
-    setResponseLog(null);
-    setTokenInfo(null);
-
-    // 1. Prepare Request Headers
-    const headersRecord = headersArrayToRecord(config.headers);
-    if (!headersRecord['Content-Type']) {
-      headersRecord['Content-Type'] = 'application/json';
-    }
-
-    // 2. Prepare Request Body
-    let bodyString = '';
-    if (config.useCustomBody && config.customBodyJson) {
-      bodyString = config.customBodyJson;
-    } else {
-      bodyString = JSON.stringify(
-        {
-          username: config.username,
-          password: config.password,
-        },
-        null,
-        2
-      );
-    }
-
-    const maskedBody = maskJsonPasswords(bodyString);
-    const rawWire = generateRawHttpWire(config.method, config.url, headersRecord, bodyString);
-
-    const newRequestLog: RequestLog = {
-      timestamp: new Date().toLocaleTimeString('vi-VN'),
-      method: config.method,
-      url: config.url,
-      headers: headersRecord,
-      body: bodyString,
-      maskedBody,
-      rawHttpWire: rawWire,
-    };
-    setRequestLog(newRequestLog);
-
-    // 3. Set Timeout Timer (crucial for IoT behavior)
-    let isTimedOut = false;
+    // Setup Timeout
     const timeoutId = setTimeout(() => {
-      isTimedOut = true;
       controller.abort();
     }, config.timeoutMs);
 
     const startTime = performance.now();
 
     try {
-      // 4. Fire the REAL fetch request
-      const response = await fetch(config.url, {
+      const fetchOptions: RequestInit = {
         method: config.method,
         headers: headersRecord,
-        body: config.method !== 'GET' ? bodyString : undefined,
         signal: controller.signal,
-      });
+      };
 
+      if (config.method !== 'GET' && bodyToSend) {
+        fetchOptions.body = bodyToSend;
+      }
+
+      const response = await fetch(targetUrl, fetchOptions);
       clearTimeout(timeoutId);
+
       const endTime = performance.now();
       const durationMs = Math.round(endTime - startTime);
 
-      // Collect Response Headers
+      // Extract response headers
       const resHeaders: Record<string, string> = {};
       response.headers.forEach((val, key) => {
         resHeaders[key] = val;
       });
 
-      // Read Response Body
-      const bodyText = await response.text();
+      // Extract response body
+      const rawText = await response.text();
       let parsedJson: any = null;
       try {
-        parsedJson = JSON.parse(bodyText);
-      } catch {}
+        parsedJson = JSON.parse(rawText);
+      } catch {
+        parsedJson = null;
+      }
 
-      // Format formatted bodyText if JSON
-      const formattedBody = parsedJson ? JSON.stringify(parsedJson, null, 2) : bodyText;
-
-      const isError = !response.ok;
       const resLog: ResponseLog = {
         status: response.status,
         statusText: response.statusText,
         headers: resHeaders,
-        bodyText: formattedBody,
+        bodyText: rawText,
         jsonBody: parsedJson,
         durationMs,
-        isError,
-        errorMessage: isError
-          ? `Máy chủ phản hồi mã lỗi HTTP ${response.status} (${response.statusText})`
-          : undefined,
-        errorType: isError ? 'HTTP_ERROR' : undefined,
+        isError: !response.ok,
       };
 
       setResponseLog(resLog);
 
-      // Extract token if successful
-      let foundToken: AuthTokenInfo | null = null;
-      if (response.ok && parsedJson) {
-        foundToken = inspectToken(parsedJson);
-        if (foundToken) {
-          setTokenInfo(foundToken);
+      // Inspect Token if present
+      let extractedToken: AuthTokenInfo | null = null;
+      if (parsedJson) {
+        extractedToken = inspectToken(parsedJson);
+        if (extractedToken) {
+          setTokenInfo(extractedToken);
         }
       }
 
-      // Add to history
-      const historyItem: HistoryItem = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        url: config.url,
+      // Add to History
+      const histItem: HistoryItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        timestamp: newReqLog.timestamp,
+        url: targetUrl,
         method: config.method,
-        status: resLog.status,
-        statusText: resLog.statusText,
-        durationMs: resLog.durationMs,
-        isError: resLog.isError,
-        request: newRequestLog,
+        status: response.status,
+        statusText: response.statusText,
+        durationMs,
+        isError: !response.ok,
+        request: newReqLog,
         response: resLog,
-        tokenInfo: foundToken,
+        tokenInfo: extractedToken,
       };
-      setHistory((prev) => [historyItem, ...prev.slice(0, 7)]);
-      setSelectedHistoryId(historyItem.id);
+
+      setHistory((prev) => [histItem, ...prev.slice(0, 19)]);
+      setSelectedHistoryId(histItem.id);
+
+      // Sound & Toast feedback
+      if (response.ok) {
+        soundManager.playSuccessDing();
+        showToast(
+          'success',
+          `HTTP ${response.status} ${response.statusText}`,
+          `Máy chủ phản hồi trong ${durationMs}ms.`
+        );
+      } else {
+        soundManager.playErrorBuzz();
+        showToast(
+          'warning',
+          `HTTP ${response.status} ${response.statusText}`,
+          `Mã trạng thái cảnh báo từ máy chủ.`
+        );
+      }
     } catch (err: any) {
       clearTimeout(timeoutId);
       const endTime = performance.now();
       const durationMs = Math.round(endTime - startTime);
 
-      let errorType: 'TIMEOUT' | 'CORS_ERROR' | 'NETWORK_ERROR' | 'ABORTED' = 'NETWORK_ERROR';
-      let errorMessage = 'Không thể kết nối đến máy chủ.';
+      let status = 0;
+      let statusText = 'Network Error';
+      let errorMsg = err.message || 'Lỗi mạng không xác định';
+      let errorType: 'NETWORK_ERROR' | 'TIMEOUT' | 'CORS_ERROR' | 'HTTP_ERROR' | 'ABORTED' =
+        'NETWORK_ERROR';
 
-      if (isTimedOut || err.name === 'AbortError') {
-        if (isTimedOut) {
-          errorType = 'TIMEOUT';
-          errorMessage = `Yêu cầu bị ngắt (Timeout) sau ${config.timeoutMs}ms. Máy chủ không phản hồi kịp thời.`;
-        } else {
-          errorType = 'ABORTED';
-          errorMessage = 'Yêu cầu đã bị hủy bởi người dùng (User Aborted).';
-        }
-      } else if (err instanceof TypeError && err.message.toLowerCase().includes('failed to fetch')) {
+      if (err.name === 'AbortError') {
+        statusText = 'Request Timeout';
+        errorType = 'TIMEOUT';
+        errorMsg = `Quá thời gian chờ (${config.timeoutMs}ms). Không nhận được phản hồi từ server.`;
+      } else if (err.message && err.message.includes('Failed to fetch')) {
+        statusText = 'Connection Refused / CORS Blocked';
         errorType = 'CORS_ERROR';
-        errorMessage =
-          'Lỗi kết nối hoặc CORS (Cross-Origin Resource Sharing). Trình duyệt chặn đọc phản hồi do server chưa cấu hình Access-Control-Allow-Origin, hoặc URL không tồn tại.';
-      } else if (err.message) {
-        errorMessage = err.message;
+        errorMsg = 'Không thể kết nối đến máy chủ. Kiểm tra lại kết nối mạng Internet hoặc cấu hình CORS của server.';
       }
 
-      const errResLog: ResponseLog = {
-        status: 0,
-        statusText: errorType,
+      const errorResLog: ResponseLog = {
+        status,
+        statusText,
         headers: {},
-        bodyText: '',
+        bodyText: JSON.stringify(
+          {
+            error: true,
+            type: statusText,
+            message: errorMsg,
+            tip: 'Nếu test server ngoài, đảm bảo server đó cho phép CORS (Access-Control-Allow-Origin: *).',
+          },
+          null,
+          2
+        ),
+        jsonBody: { error: errorMsg },
         durationMs,
         isError: true,
-        errorMessage,
+        errorMessage: errorMsg,
         errorType,
       };
-      setResponseLog(errResLog);
 
-      // Add error to history
-      const historyItem: HistoryItem = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        url: config.url,
+      setResponseLog(errorResLog);
+
+      const histItem: HistoryItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        timestamp: newReqLog.timestamp,
+        url: targetUrl,
         method: config.method,
-        status: 0,
-        statusText: errorType,
+        status,
+        statusText,
         durationMs,
         isError: true,
-        request: newRequestLog,
-        response: errResLog,
+        request: newReqLog,
+        response: errorResLog,
         tokenInfo: null,
       };
-      setHistory((prev) => [historyItem, ...prev.slice(0, 7)]);
-      setSelectedHistoryId(historyItem.id);
+
+      setHistory((prev) => [histItem, ...prev.slice(0, 19)]);
+      setSelectedHistoryId(histItem.id);
+
+      soundManager.playErrorBuzz();
+      showToast('error', statusText, errorMsg);
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
   };
 
+  // Abort active request
+  const handleAbortRequest = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      showToast('info', 'Đã hủy request', 'Yêu cầu HTTP đã bị hủy lập tức bởi người dùng.');
+    }
+  };
+
+  // Restore request from history item
+  const handleSelectHistoryItem = (item: HistoryItem) => {
+    setSelectedHistoryId(item.id);
+    setRequestLog(item.request);
+    setResponseLog(item.response);
+    setTokenInfo(item.tokenInfo);
+
+    // Populate form config from history snapshot
+    setConfig((prev) => ({
+      ...prev,
+      url: item.request.url,
+      method: item.request.method,
+      headers: Object.entries(item.request.headers).map(([k, v]) => ({
+        key: k,
+        value: v,
+        enabled: true,
+      })),
+      customBodyJson: item.request.body,
+      useCustomBody: true,
+    }));
+
+    showToast('info', 'Đã phục hồi lịch sử', `Nạp lại gói tin HTTP ${item.method} ${item.status}`);
+  };
+
+  // Clear all history
+  const handleClearHistory = () => {
+    setHistory([]);
+    setSelectedHistoryId(null);
+    showToast('info', 'Đã xóa toàn bộ lịch sử');
+  };
+
   const isHttps = config.url.trim().toLowerCase().startsWith('https://');
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-cyan-500 selection:text-white transition-colors duration-200">
+      {/* Toast Notification Container */}
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+
       {/* Navigation Bar */}
       <Navbar
         onOpenKnowledge={() => setKnowledgeModalOpen(true)}
         onOpenCodeSnippets={() => setSnippetsModalOpen(true)}
+        onOpenHistory={() => setHistoryDrawerOpen(true)}
+        historyCount={history.length}
+        stepByStepMode={stepByStepMode}
+        onToggleStepByStep={handleToggleStepByStep}
+        isSoundMuted={isSoundMuted}
+        onToggleSound={handleToggleSound}
         onReset={handleReset}
       />
 
@@ -348,22 +482,25 @@ export default function App() {
             {/* Quick Educational Topics Trigger Chips */}
             <div className="flex flex-wrap md:flex-col gap-2 shrink-0">
               <button
+                type="button"
                 onClick={() => openKnowledgeWithTopic('http-vs-https')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition cursor-pointer"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>HTTP vs HTTPS trong IoT</span>
               </button>
               <button
+                type="button"
                 onClick={() => openKnowledgeWithTopic('http-methods')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition cursor-pointer"
               >
                 <Zap className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                 <span>GET vs POST vs PUT</span>
               </button>
               <button
+                type="button"
                 onClick={() => openKnowledgeWithTopic('network-errors-timeouts')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition cursor-pointer"
               >
                 <HelpCircle className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                 <span>Lỗi Mạng & Timeout</span>
@@ -372,50 +509,91 @@ export default function App() {
           </div>
         </div>
 
-        {/* Section 1: Login Form & Endpoint Config */}
-        <LoginConfigCard
-          config={config}
-          onChangeConfig={setConfig}
-          presets={HTTP_PRESETS}
-          selectedPresetId={selectedPresetId}
-          onSelectPreset={handleSelectPreset}
-          onSendRequest={handleSendRequest}
-          onAbortRequest={handleAbortRequest}
-          isLoading={isLoading}
-        />
-
-        {/* Section 2: Visual HTTP Lifecycle Pipeline */}
-        <HttpLifecycleViewer
-          isRequesting={isLoading}
-          response={responseLog}
-          isHttps={isHttps}
-        />
-
-        {/* Section 2.5: Request History Stream */}
-        <RequestHistoryBar
-          history={history}
-          selectedId={selectedHistoryId}
-          onSelect={handleSelectHistoryItem}
-          onClear={handleClearHistory}
-        />
-
-        {/* Section 3: Detailed Request & Response Technical Inspector */}
-        <RequestResponseInspector
-          request={requestLog}
-          response={responseLog}
-          isLoading={isLoading}
-        />
-
-        {/* Section 4: Token & JWT Visualizer (if success and token detected) */}
-        {tokenInfo && (
-          <TokenVisualizer
-            tokenInfo={tokenInfo}
-            serverUrl={config.url}
+        {/* 2 CỘT ĐỐI XỨNG (SPLIT SCREEN TRÊN DESKTOP) & NETWORK PIPE CONNECTOR */}
+        <div className="space-y-4">
+          {/* Network Pipe Connector (Trực quan hóa đường truyền dữ liệu nối giữa Client và Server) */}
+          <NetworkPipeConnector
+            isLoading={isLoading}
+            response={responseLog}
+            isHttps={isHttps}
+            method={config.method}
           />
-        )}
 
-        {/* Section 5: Educational Summary & IoT Guidance Footer Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+          {/* Grid 2 Cột: Cột Trái (Client Panel) và Cột Phải (Server Panel) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* CỘT TRÁI: CLIENT PANEL (Cấu hình Request, 3D Tilt Card, cURL Copy, Depth Press) */}
+            <div className="flex flex-col">
+              <LoginConfigCard
+                config={config}
+                onChangeConfig={setConfig}
+                presets={HTTP_PRESETS}
+                selectedPresetId={selectedPresetId}
+                onSelectPreset={handleSelectPreset}
+                onSendRequest={handleSendRequest}
+                onAbortRequest={handleAbortRequest}
+                isLoading={isLoading}
+                stepByStepMode={stepByStepMode}
+                onCopyToast={(text, title) => showToast('info', title, text)}
+              />
+            </div>
+
+            {/* CỘT PHẢI: SERVER PANEL (Hiển thị Response, Status Code Micro-Animation, JSON, Headers, Token) */}
+            <div className="flex flex-col">
+              <ServerResponsePanel
+                response={responseLog}
+                tokenInfo={tokenInfo}
+                serverUrl={config.url}
+                isLoading={isLoading}
+                onCopyToast={(text, title) => showToast('info', title, text)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION TIẾT LỘ DẦN (PROGRESSIVE DISCLOSURE): VÒNG ĐỜI HTTP 5 BƯỚC */}
+        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm transition-all duration-200">
+          <button
+            type="button"
+            onClick={() => setShowLifecycleSection(!showLifecycleSection)}
+            className="w-full p-4 flex items-center justify-between gap-3 text-left hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-500">
+                <Activity className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                  Vòng Đời HTTP & Đường Đi Gói Tin Mạng (HTTP Lifecycle)
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  5 giai đoạn từ Socket TCP & Handshake đến Máy chủ xử lý và phản hồi 200 OK
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
+              <span>{showLifecycleSection ? 'Thu gọn' : 'Mở rộng'}</span>
+              {showLifecycleSection ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </div>
+          </button>
+
+          {showLifecycleSection && (
+            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
+              <HttpLifecycleViewer
+                isRequesting={isLoading}
+                response={responseLog}
+                isHttps={isHttps}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* SECTION: EDUCATIONAL SUMMARY & IOT GUIDANCE FOOTER CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-200 dark:border-slate-800">
           <div className="bg-white dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-xs transition-colors duration-200">
             <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -425,8 +603,9 @@ export default function App() {
               Nếu dùng HTTP thường, mật khẩu đăng nhập của thiết bị gửi qua Wi-Fi công cộng hay 4G đều bị lộ dạng bản rõ. HTTPS mã hóa qua TLS bảo vệ an toàn danh tính thiết bị trước các cuộc tấn công nghe lén (Sniffing).
             </p>
             <button
+              type="button"
               onClick={() => openKnowledgeWithTopic('http-vs-https')}
-              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold"
+              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold cursor-pointer"
             >
               Đọc chi tiết về TLS trên ESP32 &rarr;
             </button>
@@ -441,8 +620,9 @@ export default function App() {
               Sau khi login thành công, thiết bị lưu Token vào RAM. Các lần gửi dữ liệu cảm biến sau đó chỉ cần đính kèm header <code className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 font-mono">Authorization: Bearer &lt;token&gt;</code>, giảm thiểu rủi ro truyền lại mật khẩu gốc.
             </p>
             <button
+              type="button"
               onClick={() => openKnowledgeWithTopic('http-headers')}
-              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold"
+              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold cursor-pointer"
             >
               Xem vai trò của Headers &rarr;
             </button>
@@ -457,8 +637,9 @@ export default function App() {
               Khác với trình duyệt có tài nguyên lớn, vi điều khiển IoT có RAM rất nhỏ. Luôn đặt timeout ngắn (3s-5s) và áp dụng cơ chế thử lại trễ dần (Exponential Backoff) để bảo vệ tuổi thọ pin và chống treo Watchdog.
             </p>
             <button
+              type="button"
               onClick={() => openKnowledgeWithTopic('network-errors-timeouts')}
-              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold"
+              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold cursor-pointer"
             >
               Xem giải pháp xử lý lỗi mạng &rarr;
             </button>
@@ -469,9 +650,19 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 py-4 px-4 text-center text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
         <p>
-          Ứng dụng Giáo dục Giao thức HTTP & Xác Thực IoT | Hỗ trợ kiểm thử trực tiếp máy chủ HTTP/HTTPS thật
+          Ứng dụng Giáo dục Giao thức HTTP & Xác Thực IoT | Thiết kế theo trường phái UI/UX Pro Max Minimalism & Cyberpunk-Lite
         </p>
       </footer>
+
+      {/* Request History Drawer */}
+      <RequestHistoryDrawer
+        isOpen={historyDrawerOpen}
+        onClose={() => setHistoryDrawerOpen(false)}
+        history={history}
+        selectedId={selectedHistoryId}
+        onSelect={handleSelectHistoryItem}
+        onClear={handleClearHistory}
+      />
 
       {/* Knowledge Base Modal */}
       <KnowledgeBaseModal

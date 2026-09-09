@@ -81,3 +81,11 @@ export interface HistoryItem {
   tokenInfo: AuthTokenInfo | null;
 }
 
+export interface ToastNotification {
+  id: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  title: string;
+  message?: string;
+  durationMs?: number;
+}
+

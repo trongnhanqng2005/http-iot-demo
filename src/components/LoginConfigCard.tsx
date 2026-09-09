@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   Send,
   Sliders,
@@ -11,15 +12,18 @@ import {
   Sparkles,
   StopCircle,
   Clock,
-  ExternalLink,
   User,
   KeyRound,
   Layers,
-  CheckCircle2,
-  Lock,
+  Terminal,
+  Copy,
+  Check,
   CornerDownLeft,
+  Cpu,
+  HelpCircle,
 } from 'lucide-react';
 import { HeaderPair, HttpMethod, HttpPreset, RequestConfig } from '../types';
+import { ProtocolTooltip } from './ProtocolTooltip';
 
 interface LoginConfigCardProps {
   config: RequestConfig;
@@ -30,6 +34,8 @@ interface LoginConfigCardProps {
   onSendRequest: () => void;
   onAbortRequest: () => void;
   isLoading: boolean;
+  stepByStepMode: boolean;
+  onCopyToast: (text: string, title: string) => void;
 }
 
 export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
@@ -41,10 +47,47 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
   onSendRequest,
   onAbortRequest,
   isLoading,
+  stepByStepMode,
+  onCopyToast,
 }) => {
   const [showPassword, setShowPassword] = React.useState<boolean>(false);
   const [showAdvanced, setShowAdvanced] = React.useState<boolean>(false);
   const [autofillSuccess, setAutofillSuccess] = React.useState<boolean>(false);
+  const [curlCopied, setCurlCopied] = React.useState<boolean>(false);
+
+  // 3D Tilt State
+  const shouldReduceMotion = useReducedMotion();
+  const cardRef = React.useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = React.useState<{ rotateX: number; rotateY: number; glareX: number; glareY: number }>({
+    rotateX: 0,
+    rotateY: 0,
+    glareX: 50,
+    glareY: 50,
+  });
+  const [isHovered, setIsHovered] = React.useState<boolean>(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (shouldReduceMotion || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    // Small, subtle angle (-2.5 to 2.5 deg) for a high-end feel without distorting usability
+    const rotateX = ((y - centerY) / centerY) * -2.5;
+    const rotateY = ((x - centerX) / centerX) * 2.5;
+
+    const glareX = (x / rect.width) * 100;
+    const glareY = (y / rect.height) * 100;
+
+    setTilt({ rotateX, rotateY, glareX, glareY });
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+  };
 
   const isHttps = config.url.trim().toLowerCase().startsWith('https://');
   const isHttp = config.url.trim().toLowerCase().startsWith('http://');
@@ -95,6 +138,35 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
     onChangeConfig({ ...config, useCustomBody: useCustom });
   };
 
+  // Generate and copy cURL command
+  const handleCopyAsCurl = () => {
+    let bodyString = '';
+    if (config.useCustomBody && config.customBodyJson) {
+      bodyString = config.customBodyJson;
+    } else {
+      bodyString = JSON.stringify(
+        { username: config.username, password: config.password },
+        null,
+        2
+      );
+    }
+
+    let curl = `curl -X ${config.method} "${config.url}" \\\n`;
+    config.headers
+      .filter((h) => h.enabled && h.key)
+      .forEach((h) => {
+        curl += `  -H "${h.key}: ${h.value}" \\\n`;
+      });
+    if (config.method !== 'GET' && bodyString) {
+      curl += `  -d '${bodyString.replace(/'/g, `'\\''`)}'`;
+    }
+
+    navigator.clipboard.writeText(curl.trim());
+    setCurlCopied(true);
+    onCopyToast(curl.trim(), 'Đã sao chép lệnh cURL vào clipboard!');
+    setTimeout(() => setCurlCopied(false), 2200);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoading) {
@@ -123,46 +195,77 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
 
   return (
     <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
       onKeyDown={handleKeyDown}
-      className="bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden transition-all duration-200"
+      style={{
+        transform:
+          !shouldReduceMotion && isHovered
+            ? `perspective(1000px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`
+            : 'none',
+        transition: isHovered ? 'transform 0.08s ease-out' : 'transform 0.3s ease-out',
+      }}
+      className="relative bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col transition-colors duration-200"
     >
+      {/* 3D Glare Light Reflection (strictly pointer-events-none so text selection works flawlessly) */}
+      {!shouldReduceMotion && isHovered && (
+        <div
+          className="absolute inset-0 pointer-events-none z-10 opacity-30 transition-opacity duration-300"
+          style={{
+            background: `radial-gradient(circle 320px at ${tilt.glareX}% ${tilt.glareY}%, rgba(6, 182, 212, 0.25), transparent 70%)`,
+          }}
+        />
+      )}
+
       {/* Card Header & Preset Selector */}
-      <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+      <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                Cấu Hình Endpoint & Thông Tin Xác Thực
-              </h2>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+              <Cpu className="w-4 h-4" />
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Chọn máy chủ mẫu hoặc nhập trực tiếp URL API của thiết bị IoT
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                  IoT Client (Gửi HTTP Request)
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+                  ESP32 / Node
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Cấu hình thông tin xác thực, Endpoint & Payload gửi lên Cloud
+              </p>
+            </div>
           </div>
 
-          <button
-            type="button"
-            id="btn-toggle-advanced-config"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-              showAdvanced
-                ? 'bg-cyan-50 dark:bg-cyan-950/60 border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-300'
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>{showAdvanced ? 'Đóng cấu hình nâng cao' : 'Headers & Timeout'}</span>
-            <span className="px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-700 text-[10px] font-mono">
-              {config.headers.filter(h => h.enabled).length}
-            </span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Advanced Toggle Button */}
+            <button
+              type="button"
+              id="btn-toggle-advanced-config"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                showAdvanced
+                  ? 'bg-cyan-50 dark:bg-cyan-950/60 border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-300'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/80'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>{showAdvanced ? 'Đóng nâng cao' : 'Headers & Timeout'}</span>
+              <span className="px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-700 text-[10px] font-mono">
+                {config.headers.filter((h) => h.enabled).length}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Preset Selector Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0 mr-1">
-            Máy chủ mẫu:
+            Máy chủ:
           </span>
           {presets.map((preset) => {
             const isSelected = selectedPresetId === preset.id;
@@ -172,9 +275,9 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                 id={`btn-preset-${preset.id}`}
                 type="button"
                 onClick={() => onSelectPreset(preset.id)}
-                className={`group px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                className={`group px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
                   isSelected
-                    ? 'bg-cyan-600 text-white shadow-xs font-semibold'
+                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-900/30 font-semibold'
                     : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750'
                 }`}
               >
@@ -195,48 +298,69 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
-        {/* URL Endpoint Configuration */}
+        {/* URL Endpoint Configuration + Copy as cURL Button */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label
               htmlFor="input-server-url"
               className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
             >
-              <span>URL Máy chủ Xác thực (Endpoint URL)</span>
+              <span>Endpoint URL</span>
               <span className="text-rose-500">*</span>
             </label>
-            <div className="flex items-center gap-1.5 text-xs">
-              {isHttps ? (
-                <span
-                  title="HTTPS: Bắt buộc mã hóa TLS 1.2/1.3, an toàn cho tài khoản và token thiết bị."
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>HTTPS (TLS Encrypted)</span>
-                </span>
-              ) : isHttp ? (
-                <span
-                  title="HTTP: Gói tin truyền không mã hóa qua cổng 80, dễ bị kẻ xấu bắt gói tin Wi-Fi (Packet Sniffing)."
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30"
-                >
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  <span>HTTP (Plaintext Không Mã Hóa)</span>
-                </span>
-              ) : null}
+
+            <div className="flex items-center gap-2 text-xs">
+              <ProtocolTooltip topicKey="TLS" active={stepByStepMode}>
+                {isHttps ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>HTTPS (TLS Encrypted)</span>
+                  </span>
+                ) : isHttp ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30">
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    <span>HTTP (Plaintext)</span>
+                  </span>
+                ) : null}
+              </ProtocolTooltip>
+
+              {/* Nút "Copy as cURL" đặt cạnh URL request theo yêu cầu */}
+              <button
+                type="button"
+                id="btn-copy-curl"
+                onClick={handleCopyAsCurl}
+                title="Sao chép toàn bộ request này thành lệnh cURL"
+                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+              >
+                {curlCopied ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-500" />
+                    <span className="text-emerald-500 font-bold">Đã chép cURL</span>
+                  </>
+                ) : (
+                  <>
+                    <Terminal className="w-3 h-3 text-cyan-500" />
+                    <span>Copy as cURL</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
-          <div className="relative flex rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
-            <select
-              value={config.method}
-              onChange={handleMethodChange}
-              className="bg-slate-100 dark:bg-slate-800 text-cyan-700 dark:text-cyan-400 font-mono text-xs font-bold px-3 py-2 border-r border-slate-300 dark:border-slate-700 cursor-pointer focus:outline-none"
-            >
-              <option value="POST">POST</option>
-              <option value="GET">GET</option>
-              <option value="PUT">PUT</option>
-              <option value="PATCH">PATCH</option>
-            </select>
+          <div className="relative flex rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
+            <ProtocolTooltip topicKey={config.method} active={stepByStepMode}>
+              <select
+                value={config.method}
+                onChange={handleMethodChange}
+                className="h-full bg-slate-100 dark:bg-slate-800 text-cyan-700 dark:text-cyan-400 font-mono text-xs font-bold px-3 py-2 border-r border-slate-300 dark:border-slate-700 cursor-pointer focus:outline-none"
+              >
+                <option value="POST">POST</option>
+                <option value="GET">GET</option>
+                <option value="PUT">PUT</option>
+                <option value="PATCH">PATCH</option>
+              </select>
+            </ProtocolTooltip>
+
             <input
               id="input-server-url"
               type="text"
@@ -248,11 +372,11 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
             />
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-            💡 Có thể trỏ tới server API bất kỳ. Nếu server IoT chạy cục bộ (ESP32 Web Server trên LAN), hãy dùng URL IP ví dụ <code className="font-mono text-cyan-600 dark:text-cyan-400">http://192.168.1.100/login</code>.
+            💡 URL endpoint mà vi điều khiển IoT kết nối để gửi payload chứng thực.
           </p>
         </div>
 
-        {/* Custom Body Mode vs Form Credentials Toggle */}
+        {/* Payload Selector: Form vs Custom Body JSON */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
             <Layers className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
@@ -285,7 +409,7 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
           </div>
         </div>
 
-        {/* Credentials Form */}
+        {/* Form Credentials */}
         {!config.useCustomBody ? (
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -295,9 +419,9 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                   htmlFor="input-username"
                   className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
                 >
-                  Tài khoản (Username / Client ID) <span className="text-rose-500">*</span>
+                  Tài khoản (Client ID) <span className="text-rose-500">*</span>
                 </label>
-                <div className="relative flex items-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
+                <div className="relative flex items-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
                   <div className="pl-3 pr-1 text-slate-400">
                     <User className="w-4 h-4" />
                   </div>
@@ -320,7 +444,7 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                     htmlFor="input-password"
                     className="text-xs font-semibold text-slate-700 dark:text-slate-300"
                   >
-                    Mật khẩu (Secret Key / Password) <span className="text-rose-500">*</span>
+                    Mật khẩu (Secret Key) <span className="text-rose-500">*</span>
                   </label>
                   <button
                     type="button"
@@ -332,7 +456,7 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                     <span>{showPassword ? 'Ẩn' : 'Hiện'}</span>
                   </button>
                 </div>
-                <div className="relative flex items-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
+                <div className="relative flex items-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
                   <div className="pl-3 pr-1 text-slate-400">
                     <KeyRound className="w-4 h-4" />
                   </div>
@@ -351,17 +475,17 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
 
             {/* Quick Demo Autofill Hint Pill */}
             {selectedPresetId === 'dummyjson' && (
-              <div className="p-3 rounded-lg bg-cyan-50/70 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div className="p-3 rounded-xl bg-cyan-50/70 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                   <Sparkles className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
                   <span>
-                    Tài khoản mẫu: <strong className="font-mono text-cyan-800 dark:text-cyan-200">emilys</strong> / <strong className="font-mono text-cyan-800 dark:text-cyan-200">emilyspass</strong> (Trả về JWT 60 phút).
+                    Tài khoản mẫu: <strong className="font-mono text-cyan-800 dark:text-cyan-200">emilys</strong> / <strong className="font-mono text-cyan-800 dark:text-cyan-200">emilyspass</strong> (Nhận JWT 60 phút).
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleAutofillCredentials('emilys', 'emilyspass')}
-                  className="self-start sm:self-auto px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700 text-xs font-semibold transition cursor-pointer"
+                  className="self-start sm:self-auto px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700 text-xs font-semibold transition cursor-pointer"
                 >
                   {autofillSuccess ? '✓ Đã điền mẫu' : 'Nạp mẫu này'}
                 </button>
@@ -377,16 +501,18 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
               >
                 Payload JSON Body Tùy Biến
               </label>
-              <span className="text-[11px] text-cyan-700 dark:text-cyan-400 font-mono">
-                Content-Type: application/json
-              </span>
+              <ProtocolTooltip topicKey="Content-Type" active={stepByStepMode}>
+                <span className="text-[11px] text-cyan-700 dark:text-cyan-400 font-mono">
+                  Content-Type: application/json
+                </span>
+              </ProtocolTooltip>
             </div>
             <textarea
               id="input-custom-body"
               rows={4}
               value={config.customBodyJson || ''}
               onChange={handleCustomBodyChange}
-              className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition"
+              className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition"
               placeholder={`{\n  "username": "...",\n  "password": "..."\n}`}
             />
           </div>
@@ -399,23 +525,18 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  HTTP Request Headers ({config.headers.filter(h => h.enabled).length} kích hoạt)
+                  HTTP Request Headers ({config.headers.filter((h) => h.enabled).length} kích hoạt)
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleAddHeader('Accept', 'application/json')}
-                    className="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono transition cursor-pointer"
-                  >
-                    + Accept: json
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAddHeader('X-Device-Id', 'ESP32-NODE-01')}
-                    className="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono transition cursor-pointer"
-                  >
-                    + X-Device-Id
-                  </button>
+                  <ProtocolTooltip topicKey="X-Device-Id" active={stepByStepMode}>
+                    <button
+                      type="button"
+                      onClick={() => handleAddHeader('X-Device-Id', 'ESP32-NODE-01')}
+                      className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono transition cursor-pointer"
+                    >
+                      + X-Device-Id
+                    </button>
+                  </ProtocolTooltip>
                   <button
                     type="button"
                     id="btn-add-header"
@@ -438,20 +559,22 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                       onChange={(e) => handleHeaderChange(idx, 'enabled', e.target.checked)}
                       className="rounded border-slate-300 dark:border-slate-700 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
                     />
-                    <input
-                      type="text"
-                      id={`input-header-key-${idx}`}
-                      value={header.key}
-                      onChange={(e) => handleHeaderChange(idx, 'key', e.target.value)}
-                      placeholder="Header Key (e.g. Content-Type)"
-                      className="w-1/3 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-200 focus:border-cyan-500 focus:outline-none"
-                    />
+                    <ProtocolTooltip topicKey={header.key} active={stepByStepMode}>
+                      <input
+                        type="text"
+                        id={`input-header-key-${idx}`}
+                        value={header.key}
+                        onChange={(e) => handleHeaderChange(idx, 'key', e.target.value)}
+                        placeholder="Header Key (e.g. Content-Type)"
+                        className="w-32 sm:w-40 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-200 focus:border-cyan-500 focus:outline-none"
+                      />
+                    </ProtocolTooltip>
                     <input
                       type="text"
                       id={`input-header-val-${idx}`}
                       value={header.value}
                       onChange={(e) => handleHeaderChange(idx, 'value', e.target.value)}
-                      placeholder="Header Value (e.g. application/json)"
+                      placeholder="Header Value"
                       className="flex-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-200 focus:border-cyan-500 focus:outline-none"
                     />
                     <button
@@ -469,11 +592,11 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
             </div>
 
             {/* Timeout Slider for IoT */}
-            <div className="bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800">
+            <div className="bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between text-xs mb-2">
                 <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Thời gian chờ phản hồi (Request Timeout)</span>
+                  <span>Request Timeout (Giới hạn chờ mạng IoT)</span>
                 </span>
                 <span className="font-mono text-amber-600 dark:text-amber-400 font-bold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/40">
                   {config.timeoutMs / 1000}s ({config.timeoutMs} ms)
@@ -498,28 +621,28 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
           </div>
         )}
 
-        {/* Action Button */}
+        {/* Nút bấm chính với Hiệu ứng nhấn 3D (Depth Press) & Shadow phát sáng */}
         <div className="flex items-center gap-3 pt-2">
           <button
             type="submit"
             id="btn-submit-login"
             disabled={isLoading}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-5 rounded-lg font-semibold text-xs sm:text-sm text-white transition-all shadow-xs cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all cursor-pointer select-none ${
               isLoading
                 ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed text-slate-200'
-                : 'bg-cyan-600 hover:bg-cyan-500 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none'
+                : 'bg-cyan-600 hover:bg-cyan-500 shadow-[0_6px_20px_rgba(6,182,212,0.4)] hover:shadow-[0_8px_25px_rgba(6,182,212,0.6)] active:translate-y-1 active:shadow-[0_2px_10px_rgba(6,182,212,0.3)] focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none'
             }`}
           >
             {isLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Đang truyền tải qua kết nối mạng...</span>
+                <span>Đang truyền qua Network Pipe...</span>
               </>
             ) : (
               <>
                 <Send className="w-4 h-4" />
                 <span>Gửi HTTP POST Request</span>
-                <span className="hidden sm:inline-flex items-center gap-0.5 text-[11px] opacity-75 font-mono px-1.5 py-0.5 rounded bg-black/20">
+                <span className="hidden sm:inline-flex items-center gap-0.5 text-[11px] opacity-80 font-mono px-1.5 py-0.5 rounded bg-black/25">
                   <CornerDownLeft className="w-3 h-3" /> Ctrl+Enter
                 </span>
               </>
@@ -531,7 +654,7 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
               type="button"
               id="btn-abort-request"
               onClick={onAbortRequest}
-              className="flex items-center gap-1.5 px-4 py-3 rounded-lg text-xs font-semibold bg-rose-50 dark:bg-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition cursor-pointer"
               title="Hủy request ngay lập tức (Abort)"
             >
               <StopCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
@@ -543,4 +666,3 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
     </div>
   );
 };
-
