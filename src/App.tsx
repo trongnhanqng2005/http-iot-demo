@@ -262,7 +262,7 @@ export default function App() {
   const isHttps = config.url.trim().toLowerCase().startsWith('https://');
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-cyan-500 selection:text-white transition-colors duration-200">
       {/* Navigation Bar */}
       <Navbar
         onOpenKnowledge={() => setKnowledgeModalOpen(true)}
@@ -273,17 +273,17 @@ export default function App() {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Educational Context Banner */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div className="bg-white dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm dark:shadow-xl transition-colors duration-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                <Radio className="w-3.5 h-3.5 animate-pulse" />
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/20">
+                <Radio className="w-3.5 h-3.5 animate-pulse text-cyan-600 dark:text-cyan-400" />
                 <span>Mô phỏng Giao thức Mạng cho Thiết Bị IoT</span>
               </div>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-100 tracking-tight">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                 Khám Phá Cơ Chế HTTP POST & Xác Thực Token Qua Server Thật
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 Khi thiết bị IoT (ESP32, STM32, Raspberry Pi) khởi động, nó thực hiện một HTTP POST request gửi tài khoản/mật khẩu để lấy Token. Ứng dụng này giúp bạn bóc tách từng byte dữ liệu truyền tải trên dây mạng và quan sát trọn vẹn phản hồi của máy chủ.
               </p>
             </div>
@@ -292,23 +292,23 @@ export default function App() {
             <div className="flex flex-wrap md:flex-col gap-2 shrink-0">
               <button
                 onClick={() => openKnowledgeWithTopic('http-vs-https')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>HTTP vs HTTPS trong IoT</span>
               </button>
               <button
                 onClick={() => openKnowledgeWithTopic('http-methods')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition"
               >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <Zap className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                 <span>GET vs POST vs PUT</span>
               </button>
               <button
                 onClick={() => openKnowledgeWithTopic('network-errors-timeouts')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 transition"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+                <HelpCircle className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                 <span>Lỗi Mạng & Timeout</span>
               </button>
             </div>
@@ -350,50 +350,50 @@ export default function App() {
         )}
 
         {/* Section 5: Educational Summary & IoT Guidance Footer Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800">
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wide flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-xs transition-colors duration-200">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Tại sao HTTPS quan trọng cho IoT?</span>
             </h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Nếu dùng HTTP thường, mật khẩu đăng nhập của thiết bị gửi qua Wi-Fi công cộng hay 4G đều bị lộ dạng bản rõ. HTTPS mã hóa qua TLS bảo vệ an toàn danh tính thiết bị trước các cuộc tấn công nghe lén (Sniffing).
             </p>
             <button
               onClick={() => openKnowledgeWithTopic('http-vs-https')}
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
+              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold"
             >
               Đọc chi tiết về TLS trên ESP32 &rarr;
             </button>
           </div>
 
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wide flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-400" />
+          <div className="bg-white dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-xs transition-colors duration-200">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               <span>Cơ chế Xác thực Bearer Token</span>
             </h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Sau khi login thành công, thiết bị lưu Token vào RAM. Các lần gửi dữ liệu cảm biến sau đó chỉ cần đính kèm header <code className="text-cyan-300 font-mono">Authorization: Bearer &lt;token&gt;</code>, giảm thiểu rủi ro truyền lại mật khẩu gốc.
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Sau khi login thành công, thiết bị lưu Token vào RAM. Các lần gửi dữ liệu cảm biến sau đó chỉ cần đính kèm header <code className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 font-mono">Authorization: Bearer &lt;token&gt;</code>, giảm thiểu rủi ro truyền lại mật khẩu gốc.
             </p>
             <button
               onClick={() => openKnowledgeWithTopic('http-headers')}
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
+              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold"
             >
               Xem vai trò của Headers &rarr;
             </button>
           </div>
 
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wide flex items-center gap-2">
-              <Code2 className="w-4 h-4 text-cyan-400" />
+          <div className="bg-white dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-xs transition-colors duration-200">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
               <span>Xử lý Timeout & Mạng Chập Chờn</span>
             </h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Khác với trình duyệt có tài nguyên lớn, vi điều khiển IoT có RAM rất nhỏ. Luôn đặt timeout ngắn (3s-5s) và áp dụng cơ chế thử lại trễ dần (Exponential Backoff) để bảo vệ tuổi thọ pin và chống treo Watchdog.
             </p>
             <button
               onClick={() => openKnowledgeWithTopic('network-errors-timeouts')}
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
+              className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold"
             >
               Xem giải pháp xử lý lỗi mạng &rarr;
             </button>
@@ -402,7 +402,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-4 px-4 text-center text-xs text-slate-400">
+      <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 py-4 px-4 text-center text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
         <p>
           Ứng dụng Giáo dục Giao thức HTTP & Xác Thực IoT | Hỗ trợ kiểm thử trực tiếp máy chủ HTTP/HTTPS thật
         </p>

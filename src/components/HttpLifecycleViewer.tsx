@@ -37,27 +37,27 @@ export const HttpLifecycleViewer: React.FC<HttpLifecycleViewerProps> = ({
   const isNetworkFail = response && response.isError && response.status === 0;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 shadow-lg shadow-black/20">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm dark:shadow-lg dark:shadow-black/20 transition-colors duration-200">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-          <h3 className="text-xs sm:text-sm font-bold text-slate-200 tracking-wide uppercase">
+          <div className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-ping" />
+          <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-200 tracking-wide uppercase">
             Vòng Đời Giao Thức HTTP / HTTPS (Request - Response Lifecycle)
           </h3>
         </div>
 
         {response && (
           <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
-              <Timer className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+              <Timer className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
               <span>Thời gian phản hồi (Latency): </span>
-              <strong className="font-mono text-cyan-300">{response.durationMs} ms</strong>
+              <strong className="font-mono text-cyan-700 dark:text-cyan-300">{response.durationMs} ms</strong>
             </div>
 
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+              <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>Kích thước Body: </span>
-              <strong className="font-mono text-amber-300">
+              <strong className="font-mono text-amber-700 dark:text-amber-300">
                 {new TextEncoder().encode(response.bodyText || '').length} bytes
               </strong>
             </div>
@@ -71,18 +71,18 @@ export const HttpLifecycleViewer: React.FC<HttpLifecycleViewerProps> = ({
         <div
           className={`p-3 rounded-lg border transition-all ${
             activeStep >= 1
-              ? 'bg-slate-800/80 border-cyan-500/60 shadow-sm shadow-cyan-950/40'
-              : 'bg-slate-950/60 border-slate-800 text-slate-500'
+              ? 'bg-cyan-50/60 dark:bg-slate-800/80 border-cyan-300 dark:border-cyan-500/60 shadow-xs'
+              : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
               Bước 1: Client
             </span>
-            <Cpu className={`w-4 h-4 ${activeStep >= 1 ? 'text-cyan-400' : 'text-slate-600'}`} />
+            <Cpu className={`w-4 h-4 ${activeStep >= 1 ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-400 dark:text-slate-600'}`} />
           </div>
-          <div className="font-semibold text-xs text-slate-200">Thiết bị IoT / App</div>
-          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+          <div className="font-semibold text-xs text-slate-900 dark:text-slate-200">Thiết bị IoT / App</div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
             Khởi tạo socket TCP, phân giải DNS sang IP máy chủ.
           </p>
         </div>
@@ -91,20 +91,20 @@ export const HttpLifecycleViewer: React.FC<HttpLifecycleViewerProps> = ({
         <div
           className={`p-3 rounded-lg border transition-all ${
             activeStep >= 2
-              ? 'bg-slate-800/80 border-cyan-500/60 shadow-sm shadow-cyan-950/40'
-              : 'bg-slate-950/60 border-slate-800 text-slate-500'
+              ? 'bg-cyan-50/60 dark:bg-slate-800/80 border-cyan-300 dark:border-cyan-500/60 shadow-xs'
+              : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
               Bước 2: Kết nối
             </span>
-            <ShieldCheck className={`w-4 h-4 ${isHttps ? 'text-emerald-400' : 'text-amber-400'}`} />
+            <ShieldCheck className={`w-4 h-4 ${isHttps ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`} />
           </div>
-          <div className="font-semibold text-xs text-slate-200">
+          <div className="font-semibold text-xs text-slate-900 dark:text-slate-200">
             {isHttps ? 'Bắt tay TLS (Port 443)' : 'TCP Bản rõ (Port 80)'}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
             {isHttps
               ? 'Trao đổi chứng chỉ CA & tạo khóa phiên mã hóa đối xứng.'
               : 'Bắt tay TCP 3-way handshake thông thường, không mã hóa.'}
@@ -115,21 +115,21 @@ export const HttpLifecycleViewer: React.FC<HttpLifecycleViewerProps> = ({
         <div
           className={`p-3 rounded-lg border transition-all ${
             isRequesting
-              ? 'bg-cyan-950/50 border-cyan-400 animate-pulse'
+              ? 'bg-cyan-100/80 dark:bg-cyan-950/50 border-cyan-400 animate-pulse'
               : activeStep >= 3
-              ? 'bg-slate-800/80 border-cyan-500/60'
-              : 'bg-slate-950/60 border-slate-800 text-slate-500'
+              ? 'bg-cyan-50/60 dark:bg-slate-800/80 border-cyan-300 dark:border-cyan-500/60'
+              : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
               Bước 3: Request
             </span>
-            <ArrowRight className={`w-4 h-4 ${activeStep >= 3 ? 'text-cyan-400' : 'text-slate-600'}`} />
+            <ArrowRight className={`w-4 h-4 ${activeStep >= 3 ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-400 dark:text-slate-600'}`} />
           </div>
-          <div className="font-semibold text-xs text-slate-200">Gửi Headers & Body</div>
-          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-            Truyền tải chuỗi JSON <code className="text-cyan-300 font-mono text-[10px]">{`{username, password}`}</code> qua luồng mạng.
+          <div className="font-semibold text-xs text-slate-900 dark:text-slate-200">Gửi Headers & Body</div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+            Truyền tải chuỗi JSON <code className="text-cyan-700 dark:text-cyan-300 font-mono text-[10px]">{`{username, password}`}</code> qua luồng mạng.
           </p>
         </div>
 
@@ -137,20 +137,20 @@ export const HttpLifecycleViewer: React.FC<HttpLifecycleViewerProps> = ({
         <div
           className={`p-3 rounded-lg border transition-all ${
             isRequesting
-              ? 'bg-cyan-950/50 border-cyan-400 animate-pulse'
+              ? 'bg-cyan-100/80 dark:bg-cyan-950/50 border-cyan-400 animate-pulse'
               : activeStep >= 4
-              ? 'bg-slate-800/80 border-cyan-500/60'
-              : 'bg-slate-950/60 border-slate-800 text-slate-500'
+              ? 'bg-cyan-50/60 dark:bg-slate-800/80 border-cyan-300 dark:border-cyan-500/60'
+              : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
               Bước 4: Máy chủ
             </span>
-            <Server className={`w-4 h-4 ${activeStep >= 4 ? 'text-cyan-400' : 'text-slate-600'}`} />
+            <Server className={`w-4 h-4 ${activeStep >= 4 ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-400 dark:text-slate-600'}`} />
           </div>
-          <div className="font-semibold text-xs text-slate-200">Xác thực & Tạo Token</div>
-          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+          <div className="font-semibold text-xs text-slate-900 dark:text-slate-200">Xác thực & Tạo Token</div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
             Đối chiếu mật khẩu trong Database, ký phát sinh chuỗi JWT/Session Token.
           </p>
         </div>
@@ -160,27 +160,27 @@ export const HttpLifecycleViewer: React.FC<HttpLifecycleViewerProps> = ({
           className={`p-3 rounded-lg border transition-all ${
             response
               ? isSuccess
-                ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200 shadow-sm shadow-emerald-950'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-500/80 text-emerald-900 dark:text-emerald-200 shadow-xs'
                 : isClientError
-                ? 'bg-amber-950/40 border-amber-500/80 text-amber-200'
-                : 'bg-rose-950/40 border-rose-500/80 text-rose-200'
-              : 'bg-slate-950/60 border-slate-800 text-slate-500'
+                ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/80 text-amber-900 dark:text-amber-200 shadow-xs'
+                : 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-500/80 text-rose-900 dark:text-rose-200 shadow-xs'
+              : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
               Bước 5: Phản hồi
             </span>
             {response ? (
               isSuccess ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               ) : isClientError ? (
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               ) : (
-                <XCircle className="w-4 h-4 text-rose-400" />
+                <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
               )
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-slate-600" />
+              <CheckCircle2 className="w-4 h-4 text-slate-400 dark:text-slate-600" />
             )}
           </div>
           <div className="font-semibold text-xs">
@@ -196,7 +196,7 @@ export const HttpLifecycleViewer: React.FC<HttpLifecycleViewerProps> = ({
               'Chờ phản hồi'
             )}
           </div>
-          <p className="text-[11px] mt-1 opacity-80 leading-relaxed">
+          <p className="text-[11px] mt-1 opacity-90 leading-relaxed">
             {response
               ? isSuccess
                 ? 'Đã nhận Token thành công. Sẵn sàng cho Telemetry IoT.'

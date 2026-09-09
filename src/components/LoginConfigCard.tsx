@@ -88,15 +88,15 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-lg shadow-black/20 overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm dark:shadow-lg dark:shadow-black/20 overflow-hidden transition-colors duration-200">
       {/* Card Header & Preset Selector */}
-      <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/60">
+      <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 transition-colors duration-200">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <span>Màn Hình Đăng Nhập & Cấu Hình Endpoint</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
               Chọn máy chủ xác thực mẫu hoặc nhập URL server API IoT thật của bạn
             </p>
           </div>
@@ -107,8 +107,8 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
             onClick={() => setShowAdvanced(!showAdvanced)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition ${
               showAdvanced
-                ? 'bg-cyan-950/60 border-cyan-700 text-cyan-300'
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                ? 'bg-cyan-50 dark:bg-cyan-950/60 border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-300'
+                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
@@ -126,13 +126,13 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
               onClick={() => onSelectPreset(preset.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
                 selectedPresetId === preset.id
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-transparent'
+                  ? 'bg-cyan-100/80 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40 shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 border border-transparent'
               }`}
             >
               <span>{preset.name.split(' (')[0]}</span>
               {selectedPresetId === preset.id && (
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 dark:bg-cyan-400 animate-pulse" />
               )}
             </button>
           ))}
@@ -143,15 +143,15 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
         {/* URL Endpoint Configuration */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="input-server-url" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <label htmlFor="input-server-url" className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <span>URL Máy chủ Xác thực (Endpoint URL)</span>
-              <span className="text-rose-400">*</span>
+              <span className="text-rose-500 dark:text-rose-400">*</span>
             </label>
             <div className="flex items-center gap-1.5 text-xs">
               {isHttps ? (
                 <span
                   title="HTTPS: Có mã hóa TLS/SSL, an toàn cho mật khẩu và token."
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
                 >
                   <ShieldCheck className="w-3 h-3" />
                   <span>HTTPS (TLS Encrypted)</span>
@@ -159,7 +159,7 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
               ) : isHttp ? (
                 <span
                   title="HTTP: Dữ liệu truyền ở dạng bản rõ (plaintext), mật khẩu có thể bị nhìn trộm."
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20"
                 >
                   <ShieldAlert className="w-3 h-3" />
                   <span>HTTP (Plaintext Không Mã Hóa)</span>
@@ -168,8 +168,8 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
             </div>
           </div>
 
-          <div className="relative flex rounded-lg overflow-hidden border border-slate-700 bg-slate-950 focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500 transition">
-            <div className="flex items-center px-3 bg-slate-800/90 text-cyan-400 font-mono text-xs font-bold border-r border-slate-700 select-none">
+          <div className="relative flex rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus-within:border-cyan-600 dark:focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-600 dark:focus-within:ring-cyan-500 transition">
+            <div className="flex items-center px-3 bg-slate-100 dark:bg-slate-800/90 text-cyan-700 dark:text-cyan-400 font-mono text-xs font-bold border-r border-slate-300 dark:border-slate-700 select-none">
               POST
             </div>
             <input
@@ -179,10 +179,10 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
               onChange={handleUrlChange}
               placeholder="https://api.example.com/api/v1/login"
               required
-              className="w-full px-3 py-2 text-xs sm:text-sm font-mono text-slate-100 bg-transparent placeholder:text-slate-600 focus:outline-none"
+              className="w-full px-3 py-2 text-xs sm:text-sm font-mono text-slate-900 dark:text-slate-100 bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none"
             />
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Bạn có thể tùy chỉnh URL server thật (Node.js, Flask, Spring, ESP32 web server...) để kiểm thử trực tiếp.
           </p>
         </div>
@@ -192,8 +192,8 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Username */}
             <div>
-              <label htmlFor="input-username" className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Tên đăng nhập (Username / Identifier) <span className="text-rose-400">*</span>
+              <label htmlFor="input-username" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Tên đăng nhập (Username / Identifier) <span className="text-rose-500 dark:text-rose-400">*</span>
               </label>
               <input
                 id="input-username"
@@ -202,21 +202,21 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                 onChange={handleUsernameChange}
                 placeholder="Nhập username..."
                 required
-                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs sm:text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none transition"
+                className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-cyan-600 dark:focus:border-cyan-500 focus:outline-none transition"
               />
             </div>
 
             {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="input-password" className="text-xs font-semibold text-slate-300">
-                  Mật khẩu (Password) <span className="text-rose-400">*</span>
+                <label htmlFor="input-password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Mật khẩu (Password) <span className="text-rose-500 dark:text-rose-400">*</span>
                 </label>
                 <button
                   type="button"
                   id="btn-toggle-password-visibility"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1 transition"
+                  className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1 transition"
                 >
                   {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                   <span>{showPassword ? 'Ẩn' : 'Hiện'}</span>
@@ -230,7 +230,7 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                   onChange={handlePasswordChange}
                   placeholder="Nhập mật khẩu..."
                   required
-                  className="w-full px-3 py-2 pr-10 rounded-lg bg-slate-950 border border-slate-700 text-xs sm:text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none transition"
+                  className="w-full px-3 py-2 pr-10 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-cyan-600 dark:focus:border-cyan-500 focus:outline-none transition"
                 />
               </div>
             </div>
@@ -238,47 +238,47 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
         ) : (
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="input-custom-body" className="text-xs font-semibold text-slate-300">
+              <label htmlFor="input-custom-body" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Payload Body JSON Tùy Biến
               </label>
-              <span className="text-[11px] text-cyan-400 font-mono">Content-Type: application/json</span>
+              <span className="text-[11px] text-cyan-700 dark:text-cyan-400 font-mono">Content-Type: application/json</span>
             </div>
             <textarea
               id="input-custom-body"
               rows={4}
               value={config.customBodyJson || ''}
               onChange={handleCustomBodyChange}
-              className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-slate-200 focus:border-cyan-500 focus:outline-none transition"
+              className="w-full p-2.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-200 focus:border-cyan-600 dark:focus:border-cyan-500 focus:outline-none transition"
             />
           </div>
         )}
 
         {/* Quick Demo Fill Notification */}
         {selectedPresetId === 'dummyjson' && (
-          <div className="p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-slate-300 flex items-start gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+          <div className="p-2.5 rounded-lg bg-cyan-50/80 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800/40 text-xs text-slate-700 dark:text-slate-300 flex items-start gap-2">
+            <Sparkles className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold text-cyan-300">Tài khoản thử nghiệm DummyJSON:</span>{' '}
-              Username: <code className="text-cyan-200 bg-slate-900 px-1 py-0.5 rounded font-mono">emilys</code> | Mật khẩu:{' '}
-              <code className="text-cyan-200 bg-slate-900 px-1 py-0.5 rounded font-mono">emilyspass</code>. Trả về JWT thật có hạn 60 phút.
+              <span className="font-semibold text-cyan-800 dark:text-cyan-300">Tài khoản thử nghiệm DummyJSON:</span>{' '}
+              Username: <code className="text-cyan-800 dark:text-cyan-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1 py-0.5 rounded font-mono">emilys</code> | Mật khẩu:{' '}
+              <code className="text-cyan-800 dark:text-cyan-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1 py-0.5 rounded font-mono">emilyspass</code>. Trả về JWT thật có hạn 60 phút.
             </div>
           </div>
         )}
 
         {/* Advanced Accordion: Headers & Timeout */}
         {showAdvanced && (
-          <div className="pt-3 border-t border-slate-800/80 space-y-4">
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 space-y-4">
             {/* Headers Configuration */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-300">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   HTTP Request Headers ({config.headers.filter(h => h.enabled).length} đang kích hoạt)
                 </span>
                 <button
                   type="button"
                   id="btn-add-header"
                   onClick={handleAddHeader}
-                  className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 font-medium"
+                  className="flex items-center gap-1 text-xs text-cyan-700 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-300 font-medium"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Thêm Header</span>
@@ -293,7 +293,7 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                       id={`checkbox-header-enable-${idx}`}
                       checked={header.enabled}
                       onChange={(e) => handleHeaderChange(idx, 'enabled', e.target.checked)}
-                      className="rounded border-slate-700 bg-slate-950 text-cyan-500 focus:ring-cyan-500"
+                      className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-cyan-600 focus:ring-cyan-500"
                     />
                     <input
                       type="text"
@@ -301,7 +301,7 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                       value={header.key}
                       onChange={(e) => handleHeaderChange(idx, 'key', e.target.value)}
                       placeholder="Header Key (e.g. Content-Type)"
-                      className="w-1/3 px-2.5 py-1.5 rounded bg-slate-950 border border-slate-700 text-xs font-mono text-slate-200 focus:border-cyan-500 focus:outline-none"
+                      className="w-1/3 px-2.5 py-1.5 rounded bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-200 focus:border-cyan-600 dark:focus:border-cyan-500 focus:outline-none"
                     />
                     <input
                       type="text"
@@ -309,13 +309,13 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                       value={header.value}
                       onChange={(e) => handleHeaderChange(idx, 'value', e.target.value)}
                       placeholder="Header Value (e.g. application/json)"
-                      className="flex-1 px-2.5 py-1.5 rounded bg-slate-950 border border-slate-700 text-xs font-mono text-slate-200 focus:border-cyan-500 focus:outline-none"
+                      className="flex-1 px-2.5 py-1.5 rounded bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-200 focus:border-cyan-600 dark:focus:border-cyan-500 focus:outline-none"
                     />
                     <button
                       type="button"
                       id={`btn-remove-header-${idx}`}
                       onClick={() => handleRemoveHeader(idx)}
-                      className="p-1.5 text-slate-500 hover:text-rose-400 transition"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition"
                       title="Xóa Header"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -326,13 +326,13 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
             </div>
 
             {/* Timeout Slider for IoT */}
-            <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+            <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                   <span>Thời gian chờ phản hồi (Request Timeout): {config.timeoutMs / 1000}s</span>
                 </span>
-                <span className="font-mono text-amber-400 font-medium">{config.timeoutMs} ms</span>
+                <span className="font-mono text-amber-700 dark:text-amber-400 font-medium">{config.timeoutMs} ms</span>
               </div>
               <input
                 id="slider-request-timeout"
@@ -342,9 +342,9 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
                 step={500}
                 value={config.timeoutMs}
                 onChange={handleTimeoutChange}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-600 dark:accent-cyan-500"
               />
-              <p className="text-[11px] text-slate-400 mt-1.5">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
                 Trong IoT, luôn cần đặt timeout (thường từ 3s - 10s). Nếu server bị treo hoặc mạng rớt, vi điều khiển sẽ tự ngắt kết nối thay vì bị đứng (hang) làm cạn pin hoặc kích hoạt Hardware Watchdog Reset.
               </p>
             </div>
@@ -357,10 +357,10 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
             type="submit"
             id="btn-submit-login"
             disabled={isLoading}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-semibold text-xs sm:text-sm text-white transition shadow-md ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-semibold text-xs sm:text-sm text-white transition shadow-sm ${
               isLoading
-                ? 'bg-slate-700 cursor-not-allowed text-slate-300'
-                : 'bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 shadow-cyan-950'
+                ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed text-slate-200'
+                : 'bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 shadow-cyan-900/20'
             }`}
           >
             {isLoading ? (
@@ -381,10 +381,10 @@ export const LoginConfigCard: React.FC<LoginConfigCardProps> = ({
               type="button"
               id="btn-abort-request"
               onClick={onAbortRequest}
-              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800 transition"
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-rose-50 dark:bg-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition"
               title="Hủy request ngay lập tức (Abort)"
             >
-              <StopCircle className="w-4 h-4 text-rose-400" />
+              <StopCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
               <span>Hủy (Abort)</span>
             </button>
           )}
